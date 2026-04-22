@@ -12,6 +12,7 @@ class HkHubkogIntegrationCore
     private $settings;
     private $form_type;
     private $used_fields;
+    private $raw_products = [];
 
 
     public function __construct($params = null)
@@ -448,6 +449,10 @@ return;
             $return = [];
                 $products = explode(",", $entry[$fieldObj->id]);
                 foreach($products as $product){
+                    $product = trim($product);
+                    if(!empty($product)){
+                        $this->raw_products[] = $product;
+                    }
                     $return[] = self::check_and_return_product_ab_term($product);
                 }
 
@@ -459,7 +464,11 @@ return;
             for($i=0;$i<100;$i++) {
                 if( !empty($entry[$fieldObj->id . '.' .$i]) ) {
                     $this->used_fields[] = $fieldObj->id . '.' . $i;
-                    $return[] = self::check_and_return_product_ab_term($entry[$fieldObj->id . '.' .$i]);
+                    $product = trim($entry[$fieldObj->id . '.' .$i]);
+                    if(!empty($product)){
+                        $this->raw_products[] = $product;
+                    }
+                    $return[] = self::check_and_return_product_ab_term($product);
                 }
             }
             return $return;
@@ -504,10 +513,20 @@ return;
 
         $grouped_product_interest = $dkSettingPageObj->grouped_product_interest;
 
-        $terms = explode(PHP_EOL, $grouped_product_interest);
+        $terms = array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) $grouped_product_interest)));
+        $product_name = trim($product_name);
 
         foreach($terms as $term) {
-            $lower_case_term = strtolower($term);
+            if(strcasecmp($term, $product_name) === 0) {
+                return $term;
+            }
+        }
+
+        usort($terms, function($a, $b) {
+            return strlen($b) - strlen($a);
+        });
+
+        foreach($terms as $term) {
             if( self::check_for_similar_term($term, $product_name) ) {
                 return $term;
             }
@@ -525,12 +544,21 @@ return;
      * @return bool
      */
     private function check_for_similar_term( $term, $product_name ) {
-        if( preg_match('/'.rtrim($term, 's').'/i', $product_name) ||
-            preg_match('/'.rtrim($term, 'y').'/i', $product_name) )
-        {
-            return true;
+        $term = trim($term);
+        $product_name = trim($product_name);
+
+        if(empty($term) || empty($product_name)){
+            return false;
         }
-        if( preg_match('/'.substr($term, 0, -3).'/i', $product_name) && strlen($term) > 6 ) {
+
+        foreach([rtrim($term, 's'), rtrim($term, 'y')] as $pattern) {
+            if(!empty($pattern) && preg_match('/'.preg_quote($pattern, '/').'/i', $product_name)) {
+                return true;
+            }
+        }
+
+        if( strlen($term) > 6 &&
+            preg_match('/'.preg_quote(substr($term, 0, -3), '/').'/i', $product_name) ) {
             return true;
         }
         return false;
@@ -596,8 +624,14 @@ return;
     }
 
     private function format_for_hubkog($entry, $form) {
-        $franchiseSpam = new \additional_email_notification_using_dk_fm_tool();
-        $spam_status = $franchiseSpam->check_spam_status($form, $entry);
+        $this->raw_products = [];
+        $spam_status = false;
+        if (class_exists('\additional_email_notification_using_dk_fm_tool')) {
+            $franchiseSpam = new \additional_email_notification_using_dk_fm_tool();
+            if (method_exists($franchiseSpam, 'check_spam_status')) {
+                $spam_status = $franchiseSpam->check_spam_status($form, $entry);
+            }
+        }
 
         $street_address = self::get_form_element($entry, $form, 'House Number');
         $postcode = self::get_form_element($entry, $form, 'postcode');
@@ -632,6 +666,10 @@ return;
             'gravity_forms_id' => $entry['id'],
             'gravity_forms_created' => $entry['date_created']
         ];
+
+        if(!empty($this->raw_products)){
+            $params['raw_products'] = array_values(array_unique($this->raw_products));
+        }
 
 
         if(!empty($town)){
