@@ -1,5 +1,5 @@
 <?php
-namespace HkHubkog\admin;
+namespace StagingHubkog\admin;
 use GFAPI;
 
 class HkHubkogSettingsPage
@@ -21,8 +21,8 @@ class HkHubkogSettingsPage
      */
     public function __construct($params = null)
     {
-        $options = get_option('hk_hubkog_options');
-        $this->grouped_product_interest = $options['grouped_product_interest'];
+        $options = get_option('staging_hubkog_options');
+        $this->grouped_product_interest = isset($options['grouped_product_interest']) ? $options['grouped_product_interest'] : '';
 
         if( $params['activate'] === true ){
 
@@ -142,7 +142,7 @@ class HkHubkogSettingsPage
 
             /*GRAVITY FORMS CHECKBOX*/
             foreach ($forms as $form) {
-                $option_key = 'hk_gravity_form_' . $form['id'];
+                $option_key = 'staging_hubkog_gravity_form_' . $form['id'];
                 if (isset($input[$option_key])) {
                     $new_input[$option_key] = $input[$option_key] ? 1 : 0;
                 }
@@ -211,7 +211,7 @@ class HkHubkogSettingsPage
                                 ];
                 }
                 $this->fields[$form['id']] = $fields;
-                $option_key = 'hk_gravity_form_' . $form['id'];
+                $option_key = 'staging_hubkog_gravity_form_' . $form['id'];
                 printf(
                     '<input type="checkbox" id="form-list" name="'.$this->settings['page']['option_name'].'[%s]" value="1" %s /><label>%s</label>',
                     $option_key,
@@ -247,9 +247,6 @@ class HkHubkogSettingsPage
     public function product_interest_terms_callback()
     {
         if (self::gravityform_plugin_status()) {
-            $grouped_product_interest = [];
-            $grouped_product_interest = $this->options['grouped_product_interest'];
-
             printf(
                 '<textarea type="text" id="grouped_product_interest" name="%s" rows="10" cols="100"/>%s</textarea><br /><label style="text-color:grey;">1 product per line</label>',
                 $this->settings['page']['option_name'].'[grouped_product_interest]',
@@ -272,7 +269,7 @@ class HkHubkogSettingsPage
             $forms = GFAPI::get_forms();
             foreach ($forms as $form) {
                 $form_title = $form['title'];
-                $option_key = 'hk_gravity_form_' . $form['id'];
+                $option_key = 'staging_hubkog_gravity_form_' . $form['id'];
                 $sanitised_title = preg_replace('/ /i', '_', strtolower($form_title));
                 if (isset($this->options[$option_key])) {
                     printf(
@@ -315,7 +312,7 @@ class HkHubkogSettingsPage
         if (is_array($message)) {
             $message = json_encode($message);
         }
-        $file = fopen(plugin_dir_path(__FILE__) . "custom_logs.log", "w");
+        $file = fopen(plugin_dir_path(__FILE__) . "staging_hubkog_custom_logs.log", "w");
         fwrite($file, "\n" . date('Y-m-d h:i:s') . " :: " . $message);
         fclose($file);
     }
@@ -327,7 +324,7 @@ class HkHubkogSettingsPage
     public function custom_logs_display()
     {
         $plugin_dir = plugin_dir_path(__FILE__);
-        $custom_log_path = $plugin_dir . '/custom_logs.log';
+        $custom_log_path = $plugin_dir . '/staging_hubkog_custom_logs.log';
         if (file_exists($custom_log_path)) {
             echo '<br><br>';
             echo '&nbsp;&nbsp;<a class="dk-log__toggle" target="_blank" href="#" title="">View Log</a>';

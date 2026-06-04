@@ -4,17 +4,17 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitHkHubkogIntegration
+class ComposerStaticInitStagingHubkogIntegration
 {
     public static $prefixLengthsPsr4 = array (
-        'H' => 
+        'S' => 
         array (
-            'HkHubkog\\' => 9,
+            'StagingHubkog\\' => 14,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'HkHubkog\\' => 
+        'StagingHubkog\\' => 
         array (
             0 => __DIR__ . '/../..' . '/classes',
         ),
@@ -27,9 +27,9 @@ class ComposerStaticInitHkHubkogIntegration
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitHkHubkogIntegration::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitHkHubkogIntegration::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitHkHubkogIntegration::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitStagingHubkogIntegration::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitStagingHubkogIntegration::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitStagingHubkogIntegration::$classMap;
 
         }, null, ClassLoader::class);
     }

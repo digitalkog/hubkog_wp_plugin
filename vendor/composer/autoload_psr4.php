@@ -6,5 +6,5 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'HkHubkog\\' => array($baseDir . '/classes'),
+    'StagingHubkog\\' => array($baseDir . '/classes'),
 );

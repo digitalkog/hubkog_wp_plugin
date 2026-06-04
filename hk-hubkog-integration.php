@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name:       HK Hubkog Integration plugin
+ * Plugin Name:       Staging HubKOG Integration
  * Plugin URI:        https://digitalkog.co.uk
- * Description:       Submitting website enquiries to HubKog.
+ * Description:       Submitting website enquiries to the staging HubKOG API.
  * Version:           0.1
  * Requires at least: 4.9
  * Requires PHP:      7.2
@@ -10,14 +10,14 @@
  * Author URI:        https://www.digitalkog.co.uk
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       hk-hubkog-dealer-api-plugin
+ * Text Domain:       staging-hubkog-dealer-api-plugin
  * Domain Path:       /languages
  */
-namespace HkHubkog;
+namespace StagingHubkog;
 
 require dirname(__FILE__)."/vendor/autoload.php";
 
-define('HK_PLUGIN_FILE', __FILE__);
+define('STAGING_HUBKOG_PLUGIN_FILE', __FILE__);
     $api_fields =
     [
         'form'=>'The Form name',
@@ -37,26 +37,26 @@ new HkHubkogIntegrationCore(
     [
         'Core' => [
           'plugin' =>[
-              'name' => "Hk-hubkog-integration"
+              'name' => "staging_hubkog"
           ]
         ],
         'ResultsPage' => [
             'activate' => true,
             'settings' => [
                 'menu' => [
-                    'page_title' => 'Hubkog Results',
-                    'menu_title' => 'HK HubKog Results',
+                    'page_title' => 'Staging HubKOG Results',
+                    'menu_title' => 'Staging HubKOG Results',
                     'capability' => 'manage_options',
-                    'menu_slug' => 'hubkog_results'
+                    'menu_slug' => 'staging_hubkog_results'
                 ],
                 'page' => [
-                    'option_name' => 'hk_hubkog_results',
-                    'option_group_name' => 'hubkog_results_group',
-                    'page' => 'hubkog_result_admin',
-                    'section_id' => 'hubkog_results_section_id',
+                    'option_name' => 'staging_hubkog_results',
+                    'option_group_name' => 'staging_hubkog_results_group',
+                    'page' => 'staging_hubkog_result_admin',
+                    'section_id' => 'staging_hubkog_results_section_id',
                     'title' => 'Results',
-                    'h1' => 'HubKOG Results',
-                    'section_info' => 'Failed Hubkog Submissions:'
+                    'h1' => 'Staging HubKOG Results',
+                    'section_info' => 'Failed staging HubKOG submissions:'
                 ],
 
             ]
@@ -65,19 +65,19 @@ new HkHubkogIntegrationCore(
             'activate' => true,
             'settings' => [
                 'menu' => [
-                    'page_title' => 'Settings Admin',
-                    'menu_title' => 'HK HubKog API Settings',
+                    'page_title' => 'Staging HubKOG Settings',
+                    'menu_title' => 'Staging HubKOG API Settings',
                     'capability' => 'manage_options',
-                    'menu_slug' => 'hk_hubkog_setting_admin'
+                    'menu_slug' => 'staging_hubkog_setting_admin'
                 ],
                 'page' => [
-                    'option_name' => 'hk_hubkog_options',
-                    'option_group_name' => 'hk_hubkog_options_group',
-                    'page' => 'hk_hubkog_setting_admin',
-                    'section_id' => 'hk_hubkog_section_id',
+                    'option_name' => 'staging_hubkog_options',
+                    'option_group_name' => 'staging_hubkog_options_group',
+                    'page' => 'staging_hubkog_setting_admin',
+                    'section_id' => 'staging_hubkog_section_id',
                     'title' => 'API',
-                    'h1' => 'HubKOG Settings V3',
-                    'section_info' => 'Enter your API details below:'
+                    'h1' => 'Staging HubKOG Settings',
+                    'section_info' => 'Enter your staging API details below:'
                 ],
                 'fields' => [
                     [

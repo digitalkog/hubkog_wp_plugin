@@ -1,11 +1,11 @@
 
 {
   "config": {
-    "autoloader-suffix": "HkHubkogIntegration"
+    "autoloader-suffix": "StagingHubkogIntegration"
   },
   "autoload": {
     "psr-4": {
-      "HkHubkog\\": "classes"
+      "StagingHubkog\\": "classes"
     }
   }
 }

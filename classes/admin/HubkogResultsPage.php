@@ -1,5 +1,5 @@
 <?php
-namespace HkHubkog\admin;
+namespace StagingHubkog\admin;
 use GFAPI;
 
 class HubkogResultsPage
@@ -132,7 +132,7 @@ class HubkogResultsPage
 
             /*GRAVITY FORMS CHECKBOX*/
             foreach ($forms as $form) {
-                $option_key = 'hk_gravity_form_' . $form['id'];
+                $option_key = 'staging_hubkog_gravity_form_' . $form['id'];
                 if (isset($input[$option_key])) {
                     $new_input[$option_key] = $input[$option_key] ? 1 : 0;
                 }
@@ -201,7 +201,7 @@ class HubkogResultsPage
                                 ];
                 }
                 $this->fields[$form['id']] = $fields;
-                $option_key = 'hk_gravity_form_' . $form['id'];
+                $option_key = 'staging_hubkog_gravity_form_' . $form['id'];
                 printf(
                     '<input type="checkbox" id="form-list" name="'.$this->settings['page']['option_name'].'[%s]" value="1" %s /><label>%s</label>',
                     $option_key,
@@ -278,7 +278,7 @@ class HubkogResultsPage
         if (is_array($message)) {
             $message = json_encode($message);
         }
-        $file = fopen(plugin_dir_path(__FILE__) . "custom_logs.log", "w");
+        $file = fopen(plugin_dir_path(__FILE__) . "staging_hubkog_custom_logs.log", "w");
         fwrite($file, "\n" . date('Y-m-d h:i:s') . " :: " . $message);
         fclose($file);
     }
@@ -338,7 +338,7 @@ class Link_List_Table extends \WP_List_Table {
         $screen = get_current_screen();
 
         /* -- Preparing your query -- */
-        $query = "SELECT * FROM ".$wpdb->prefix."hubkog WHERE hubkog_uid is null";
+        $query = "SELECT * FROM ".$wpdb->prefix."staging_hubkog WHERE hubkog_uid is null";
         //die($query);
 
         /* -- Ordering parameters -- */
@@ -410,15 +410,18 @@ class Link_List_Table extends \WP_List_Table {
 
                 //Display the cell
                 $data = unserialize($rec->data);
+                if($data === false){
+                    $data = json_decode($rec->data, true);
+                }
 
-                $name = isset($data['name'])?$data['name']:'-';
+                $name = is_array($data) && isset($data['name'])?$data['name']:'-';
 
                 //die($column_name);
                 switch ( $column_name ) {
                     case "id":  echo '<td '.$attributes.'>'.stripslashes($rec->id).'</td>';   break;
                     case "data": echo '<td '.$attributes.'>'.$name.'</td>'; break;
                     case "hubkog_uid": echo '<td '.$attributes.'>'.$rec->hubkog_uid.'</td>'; break;
-                    case "Actions": echo '<td '.$attributes.' style="text-align:right;">'."<button data-id='".$rec->id."' onclick=\"retry_hubkog($(this).data('id'))\">Retry</button>".'</td>'; break;
+                    case "Actions": echo '<td '.$attributes.' style="text-align:right;">'."<button data-id='".$rec->id."' onclick=\"staging_retry_hubkog($(this).data('id'))\">Retry</button>".'</td>'; break;
                 }
             }
 

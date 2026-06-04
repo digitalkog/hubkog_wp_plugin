@@ -1,6 +1,6 @@
 <?php
-namespace HkHubkog;
-use HkHubkog\admin\HkHubkogSettingsPage;
+namespace StagingHubkog;
+use StagingHubkog\admin\HkHubkogSettingsPage;
 
 class HkHubkogIntegrationCore
 {
@@ -17,7 +17,8 @@ class HkHubkogIntegrationCore
 
     public function __construct($params = null)
     {
-        register_activation_hook( HK_PLUGIN_FILE, array( $this, 'create_database_table') );
+        register_activation_hook( STAGING_HUBKOG_PLUGIN_FILE, array( $this, 'create_database_table') );
+        register_deactivation_hook( STAGING_HUBKOG_PLUGIN_FILE, array( $this, 'clear_scheduled_events') );
 
         if(!empty($params)){
             $this->settings = $params;
@@ -37,43 +38,52 @@ class HkHubkogIntegrationCore
     public function init(){
 
         add_action( 'admin_enqueue_scripts', array( $this, 'hk_custom_scripts') );
-        add_action( 'wp_ajax_retryhubkog', array( $this, 'retry_hubkog') );
-        add_action( "wp_ajax_nopriv_retryhubkog", array( $this, 'retry_hubkog') );
+        add_action( 'wp_ajax_staging_retryhubkog', array( $this, 'retry_hubkog') );
         add_filter( 'cron_schedules', array( $this, 'hk_add_cron_interval') );
-        add_action( 'hk_cron_hook', array( $this, 'hubkog_cron_exec') );
+        add_action( 'staging_hubkog_cron_hook', array( $this, 'hubkog_cron_exec') );
 
-        if ( ! wp_next_scheduled( 'hk_cron_hook' ) ) {
-            wp_schedule_event( time(), 'everyminute', 'hk_cron_hook' );
+        if ( ! wp_next_scheduled( 'staging_hubkog_cron_hook' ) ) {
+            wp_schedule_event( time(), 'staging_hubkog_everyminute', 'staging_hubkog_cron_hook' );
         }
 
         if( is_plugin_active('gravityforms/gravityforms.php') ) {
             add_action( 'gform_after_submission', array( $this, 'post_to_third_party'), 10, 2 );
             //stuart: this is currently empty
-            $this->hubkog_options = get_option('hk_hubkog_options');
-            $this->api_url = $this->hubkog_options['api_url'];
+            $this->hubkog_options = get_option('staging_hubkog_options');
+            $this->api_url = isset($this->hubkog_options['api_url']) ? $this->hubkog_options['api_url'] : null;
             add_filter(
-                'plugin_action_links_hubkog-integration/hubkog-integration.php',
+                'plugin_action_links_' . plugin_basename(STAGING_HUBKOG_PLUGIN_FILE),
                 array( $this, 'hubkog_integration_settings_link' )
             );
         }
     }
 
     function hk_add_cron_interval( $schedules ) {
-        $schedules['everyminute'] = array(
+        $schedules['staging_hubkog_everyminute'] = array(
             'interval'  => 60, // time in seconds
-            'display'   => 'Every Minute'
+            'display'   => 'Every Minute (Staging HubKOG)'
         );
         return $schedules;
+    }
+
+    public function clear_scheduled_events() {
+        wp_clear_scheduled_hook( 'staging_hubkog_cron_hook' );
+    }
+
+    private function get_table_name() {
+        global $wpdb;
+
+        return $wpdb->prefix . 'staging_hubkog';
     }
 
     public function create_database_table() {
         global $wpdb;
 
-        $table_name = $wpdb->prefix . 'hubkog';
+        $table_name = $this->get_table_name();
 
         $charset_collate = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE IF NOT EXISTS `". $wpdb->prefix ."hubkog` (
+        $sql = "CREATE TABLE IF NOT EXISTS `". $table_name ."` (
           `id` int NOT NULL AUTO_INCREMENT,
           `data` text,
           `hubkog_uid` varchar(25) DEFAULT NULL,
@@ -166,8 +176,8 @@ class HkHubkogIntegrationCore
      */
     public function hk_custom_scripts()
     {
-        wp_enqueue_script( 'dk_integration_js', plugins_url( 'admin/js/dk-integration.js', __FILE__), array(), '1.0', true );
-        wp_enqueue_style( 'dk_integration_css', plugins_url( 'admin/css/dk-integration.css', __FILE__), array(), '1.0', true );
+        wp_enqueue_script( 'staging_hubkog_integration_js', plugins_url( 'admin/js/dk-integration.js', __FILE__), array('jquery'), '1.0', true );
+        wp_enqueue_style( 'staging_hubkog_integration_css', plugins_url( 'admin/css/dk-integration.css', __FILE__), array(), '1.0', true );
     }
 
     /**
@@ -179,12 +189,12 @@ class HkHubkogIntegrationCore
     public static function custom_logs($message, $hint = '', $writing_option = 'w')
     {
         $message = json_encode($message);
-        if( !is_file( plugin_dir_path( __FILE__ ) . "/custom_logs.log") &&
-            !file_exists(plugin_dir_path( __FILE__ ) . "/custom_logs.log") )
+        if( !is_file( plugin_dir_path( __FILE__ ) . "/staging_hubkog_custom_logs.log") &&
+            !file_exists(plugin_dir_path( __FILE__ ) . "/staging_hubkog_custom_logs.log") )
         {
-            shell_exec("touch " . plugin_dir_path( __FILE__ ) . "/custom_logs.log" );
+            shell_exec("touch " . plugin_dir_path( __FILE__ ) . "/staging_hubkog_custom_logs.log" );
         }
-        $file = fopen( plugin_dir_path( __FILE__ ) . "../includes/custom_logs.log",$writing_option);
+        $file = fopen( plugin_dir_path( __FILE__ ) . "../includes/staging_hubkog_custom_logs.log",$writing_option);
         if( !empty( $hint ) ) {
             fwrite($file, "\n" . date('d-m-Y h:i:s') . " :: #####################" . $hint . '#####################');
         }
@@ -204,11 +214,11 @@ class HkHubkogIntegrationCore
     public function post_to_third_party( $entry, $form ) {
         global $wpdb;
         //stuart - put condition back in before live:
-        if( empty($this->hubkog_options['hk_gravity_form_' . $form['id']]) && !empty($this->api_url) ) {
+        if( empty($this->hubkog_options['staging_hubkog_gravity_form_' . $form['id']]) && !empty($this->api_url) ) {
 
             $data = self::format_for_hubkog($entry, $form);
 
-            $wpdb->insert($wpdb->prefix . 'hubkog', array('data'=> json_encode($data), 'created_at' => current_time('mysql', true)));
+            $wpdb->insert($this->get_table_name(), array('data'=> json_encode($data), 'created_at' => current_time('mysql', true)));
 
             $last_insert = $wpdb->insert_id;
 
@@ -236,7 +246,7 @@ class HkHubkogIntegrationCore
             $data = json_decode($response, true);
 
             if(isset($data['data']) && !empty($data['data']['uid'])){
-                $wpdb->update($wpdb->prefix . 'hubkog', array('hubkog_uid' => $data['data']['uid'], 'updated_at' => current_time('mysql', true)), array('id' => $last_insert));
+                $wpdb->update($this->get_table_name(), array('hubkog_uid' => $data['data']['uid'], 'updated_at' => current_time('mysql', true)), array('id' => $last_insert));
             }
 
             if (!$data['success']) {
@@ -245,7 +255,7 @@ class HkHubkogIntegrationCore
             }
 
             /*if(isset($data['data']) && !empty($data['data']['uid'])){
-                $wpdb->update($wpdb->prefix . 'hubkog', array('hubkog_uid' => $data['data']['uid']), array('id' => $last_insert));
+                $wpdb->update($this->get_table_name(), array('hubkog_uid' => $data['data']['uid']), array('id' => $last_insert));
             }
 
             if (!$data['success']) {
@@ -261,8 +271,8 @@ class HkHubkogIntegrationCore
         global $wpdb;
 
         $result = $wpdb->get_results (
-            "SELECT * FROM  " . $wpdb->prefix . "hubkog WHERE hubkog_uid IS NULL AND created_at <= (now()  - INTERVAL 5 MINUTE)" );
-            //"SELECT * FROM  " . $wpdb->prefix . "hubkog WHERE hubkog_uid IS NULL" );
+            "SELECT * FROM  " . $this->get_table_name() . " WHERE hubkog_uid IS NULL AND created_at <= (now()  - INTERVAL 5 MINUTE)" );
+            //"SELECT * FROM  " . $this->get_table_name() . " WHERE hubkog_uid IS NULL" );
 
 
         foreach($result as $r){
@@ -278,6 +288,10 @@ class HkHubkogIntegrationCore
     public function retry_hubkog(){
             //die(json_encode(array('tester' => false)));
 
+        if(!current_user_can('manage_options')){
+            die(json_encode(array('success' => false)));
+        }
+
         if(!isset($_REQUEST['id']) || !is_numeric($_REQUEST['id'])){
             die(json_encode(array('success' => false)));
         }
@@ -292,12 +306,17 @@ class HkHubkogIntegrationCore
     public function retry_post_to_third_party ( $entry_id ) {
 //die("ID: " . $entry_id);
         global $wpdb;
-            $result = $wpdb->get_row (
-                "
+            $result = $wpdb->get_row(
+                $wpdb->prepare("
                     SELECT * 
-                    FROM  " . $wpdb->prefix . "hubkog
-                        WHERE id = $entry_id AND hubkog_uid IS NULL
-                " );
+                    FROM  " . $this->get_table_name() . "
+                        WHERE id = %d AND hubkog_uid IS NULL
+                ", $entry_id)
+            );
+
+            if(empty($result)){
+                return false;
+            }
 
 
             $data = unserialize($result->data);
@@ -338,12 +357,12 @@ return;
                 self::custom_logs("Hubkog retry failed: " . $result->id);
                 return $data;
             } else {
-                $wpdb->update($wpdb->prefix . 'hubkog', array('hubkog_uid' => $data['data']['uid']), array('id' => $result->id));
+                $wpdb->update($this->get_table_name(), array('hubkog_uid' => $data['data']['uid']), array('id' => $result->id));
                 return true;
             }*/
 
             if(isset($data['data']) && !empty($data['data']['uid'])){
-                $wpdb->update($wpdb->prefix . 'hubkog', array('hubkog_uid' => $data['data']['uid'], 'updated_at' => current_time('mysql', true)), array('id' => $result->id));
+                $wpdb->update($this->get_table_name(), array('hubkog_uid' => $data['data']['uid'], 'updated_at' => current_time('mysql', true)), array('id' => $result->id));
             }
 
             if (!$data['success']) {
@@ -567,7 +586,7 @@ return;
     public function hubkog_integration_settings_link( $links ) {
         $url = esc_url( add_query_arg(
             'page',
-            'hk_hubkog_setting_admin',
+            'staging_hubkog_setting_admin',
             get_admin_url() . 'admin.php'
         ) );
         $settings_link = "<a href='$url'>" . __( 'Settings' ) . '</a>';

@@ -1,11 +1,11 @@
 
-    function retry_hubkog(id) {
+    function staging_retry_hubkog(id) {
 
         $.ajax({
-            url: '/wp-admin/admin-ajax.php', // this is the object instantiated in wp_localize_script function
+            url: typeof ajaxurl !== 'undefined' ? ajaxurl : '/wp-admin/admin-ajax.php',
             type: 'POST',
             data: {
-                action: 'retryhubkog', // this is the function in your functions.php that will be triggered
+                action: 'staging_retryhubkog', // this is the function in your functions.php that will be triggered
                 id: id
             },
             success: function (data) {
