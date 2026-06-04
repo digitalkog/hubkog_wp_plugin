@@ -1,5 +1,8 @@
 
 {
+  "config": {
+    "autoloader-suffix": "HkHubkogIntegration"
+  },
   "autoload": {
     "psr-4": {
       "HkHubkog\\": "classes"
