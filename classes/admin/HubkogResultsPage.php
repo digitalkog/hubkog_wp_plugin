@@ -410,8 +410,11 @@ class Link_List_Table extends \WP_List_Table {
 
                 //Display the cell
                 $data = unserialize($rec->data);
+                if($data === false){
+                    $data = json_decode($rec->data, true);
+                }
 
-                $name = isset($data['name'])?$data['name']:'-';
+                $name = is_array($data) && isset($data['name'])?$data['name']:'-';
 
                 //die($column_name);
                 switch ( $column_name ) {
